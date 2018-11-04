@@ -15,8 +15,8 @@
 (defn- shuffle-with-seed
   "Returns the shuffled `seq` with seed as entropy."
   [seq seed]
+  ;; TODO implement shuffle from spec
   (shuffle seq))
-
 
 (defn- clamp [min max value]
   (cond

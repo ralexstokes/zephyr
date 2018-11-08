@@ -1,8 +1,8 @@
 (ns io.stokes.shuffling
-  (:require [io.stokes.validator :as validator]
-            [io.stokes.math :as math]
-            [io.stokes.hash :as hash]
-            [io.stokes.bytes :as bytes]))
+  (:require
+   [io.stokes.math :as math]
+   [io.stokes.hash :as hash]
+   [io.stokes.bytes :as bytes]))
 
 (defn split-into-pieces
   "splits up the `seq` into `split-count` pieces"

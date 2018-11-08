@@ -42,12 +42,14 @@
   (for [id (range count)]
     (validator/create id {})))
 
+(def some-seed (byte-array (map byte (range 1 33))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
   (let [constants (apply constants base-constants args)
         validators (initialize-validators (:validator-count constants))]
-    (pp/pprint (shuffling/of-validators-to-slots-and-committees :some-seed validators 0 constants))))
+    (pp/pprint (validator/new-shuffling-to-slots-and-committees validators some-seed 0 constants))))
 
 (comment
   (def constants (constants small-constants))
@@ -57,10 +59,6 @@
   (def validators (initialize-validators (:validator-count constants)))
   validators
 
-  (def seed (byte-array (map byte (range 1 33))))
-  seed
-
-  (def shuffling
-    (validator/new-shuffling-to-slots-and-committees seed validators 0 constants))
+  (def shuffling (validator/new-shuffling-to-slots-and-committees validators some-seed 0 constants))
   shuffling
   )

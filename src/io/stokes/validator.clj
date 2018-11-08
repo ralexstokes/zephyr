@@ -76,8 +76,7 @@
         validators-by-shard)))
    validators-by-slot))
 
-(defn new-shuffling-to-slots-and-committees [seed validators current-shard {:keys [shard-count cycle-length min-committee-size]}]
-  (prn min-committee-size)
+(defn new-shuffling-to-slots-and-committees [validators seed current-shard {:keys [shard-count cycle-length min-committee-size]}]
   (let [active-validators (filter (status-is :active) validators)
         committees-per-slot (calculate-committes-per-slot
                              shard-count

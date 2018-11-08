@@ -1,8 +1,13 @@
 (ns io.stokes.validator
-  (:require [io.stokes.hash :as hash]))
+  (:require
+   [io.stokes.hash :as hash]
+   [io.stokes.shuffling :as shuffling]))
 
 (defn create [id data]
-  (assoc data ::id id))
+  (-> data
+      (assoc ::id id)
+      ;; TODO fix wrong status, in general
+      (assoc ::status :active)))
 
 (defn status-is [status]
   (fn [validator]
@@ -41,6 +46,48 @@
 (defn create-set
   [initial-validator-logs]
   #{})
+
+(defn- clamp [min max value]
+  (cond
+    (<= value min) min
+    (>= value max) max
+    :else value))
+
+(defn- calculate-committes-per-slot [shard-count cycle-length active-validator-count min-committee-size]
+  (clamp 1 (quot shard-count cycle-length)
+         (quot
+          (quot active-validator-count
+                cycle-length)
+          (+ (* min-committee-size 2) 1))))
+
+(def allocate-validators-to-slots shuffling/split-into-pieces)
+
+(defn- allocate-validators-in-each-slot-to-committees [validators-by-slot committees-per-slot current-shard shard-count]
+  (map-indexed
+   (fn [slot-offset validators]
+     (let [validators-by-shard (shuffling/split-into-pieces validators committees-per-slot)
+           starting-shard-for-this-committee (+ current-shard (* slot-offset
+                                                                 committees-per-slot))]
+       (map-indexed
+        (fn [shard-offset validators]
+          {::shard (mod (+ starting-shard-for-this-committee shard-offset)
+                        shard-count)
+           ::committee validators})
+        validators-by-shard)))
+   validators-by-slot))
+
+(defn new-shuffling-to-slots-and-committees [seed validators current-shard {:keys [shard-count cycle-length min-committee-size]}]
+  (prn min-committee-size)
+  (let [active-validators (filter (status-is :active) validators)
+        committees-per-slot (calculate-committes-per-slot
+                             shard-count
+                             cycle-length
+                             (count active-validators)
+                             min-committee-size)]
+    (-> active-validators
+        (shuffling/with-seed seed)
+        (allocate-validators-to-slots cycle-length)
+        (allocate-validators-in-each-slot-to-committees committees-per-slot current-shard shard-count))))
 
 (comment
   )

@@ -40,7 +40,7 @@
 
 (defn- initialize-validators [count]
   (for [id (range count)]
-    (validator/create id)))
+    (validator/create id {})))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -52,9 +52,15 @@
 (comment
   (def constants (constants small-constants))
   constants
+  (:min-committee-size constants)
 
   (def validators (initialize-validators (:validator-count constants)))
   validators
 
-  (shuffling/of-validators-to-slots-and-committees :some-seed validators 0 constants)
+  (def seed (byte-array (map byte (range 1 33))))
+  seed
+
+  (def shuffling
+    (validator/new-shuffling-to-slots-and-committees seed validators 0 constants))
+  shuffling
   )

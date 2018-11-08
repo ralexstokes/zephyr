@@ -3,26 +3,27 @@
   (:require
    [clojure.pprint :as pp]
    [io.stokes.validator :as validator]
-   [io.stokes.shuffling :as shuffling]))
-
-(defn exp [base power]
-  (int (Math/pow base power)))
+   [io.stokes.shuffling :as shuffling]
+   [io.stokes.math :as math]))
 
 (def base-constants
-  {:shard-count (exp 2 10)
-   :deposit-size (exp 2 5)
-   :min-online-deposit-size (exp 2 4)
-   :gwei-per-eth (exp 10 9)
-   :min-committee-size (exp 2 7)
+  {:shard-count (math/exp 2 10)
+   :deposit-size (math/exp 2 5)
+   :min-online-deposit-size (math/exp 2 4)
+   :gwei-per-eth (math/exp 10 9)
+   :min-committee-size (math/exp 2 7)
    :genesis-time (java.util.Date.)
-   :slot-duration (exp 2 4)
-   :cycle-length (exp 2 6)
-   :min-validator-set-change-interval (exp 2 8)
-   :randao-slots-per-layer (exp 2 12)
-   :sqrt-e-drop-time (exp 2 16)
-   :withdrawal-period (exp 2 19)
-   :base-reward-quotient (exp 2 15)
-   :max-validator-churn-quotient (exp 2 5)
+   :slot-duration (math/exp 2 4)
+   :cycle-length (math/exp 2 6)
+   :min-validator-set-change-interval (math/exp 2 8)
+   :randao-slots-per-layer (math/exp 2 12)
+   :sqrt-e-drop-time (math/exp 2 16)
+   :withdrawal-period (math/exp 2 19)
+   :base-reward-quotient (math/exp 2 15)
+   :max-validator-churn-quotient (math/exp 2 5)
+   :logout-message "LOGOUT"
+   :initial-fork-version 0
+
    :validator-count 312500})
 
 (def small-constants
@@ -39,7 +40,7 @@
 
 (defn- initialize-validators [count]
   (for [id (range count)]
-    (validator/new id)))
+    (validator/create id)))
 
 (defn -main
   "I don't do a whole lot ... yet."

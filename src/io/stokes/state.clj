@@ -2,9 +2,16 @@
   (:require [io.stokes.hash :as hash]
             [io.stokes.shuffling :as shuffling]
             [io.stokes.bytes :as bytes]
-            [io.stokes.validator :as validator]))
+            [io.stokes.validator :as validator]
+            [io.stokes.crosslink :as crosslink]
+            [integrant.core :as ig]))
 
-(defn new [committees-by-slots previous-crystallization-slot & previous-state]
+(defmethod ig/init-key ::config [_ config]
+  (atom (merge config {})))
+
+(defmethod ig/halt-key! ::config [_ _])
+
+(defn create [committees-by-slots previous-crystallization-slot & previous-state]
   (let [state (or previous-state {})]
     (-> state
         (assoc ::comittees-by-slots committees-by-slots)
@@ -67,7 +74,7 @@
   "parses the initial set of validator logs to prepare the beacon chain genesis state"
   [initial-validator-logs {:keys [shard-count initial-fork-version cycle-length] :as constants}]
   (let [validators (validator/create-set initial-validator-logs)
-        genesis-shuffling (shuffling/of-validators-to-slots-and-committees (bytes/empty-array 32) validators 0 constants)
+        genesis-shuffling (validator/new-shuffling-to-slots-and-committees (bytes/empty-array 32) validators 0 constants)
         crosslinks (repeat shard-count (crosslink/new))
         crystallized-state (new-crystallized-state validators crosslinks genesis-shuffling initial-fork-version)
         recent-block-hashes (repeat (* 2 cycle-length) (bytes/empty-array 32))

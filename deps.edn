@@ -1,8 +1,10 @@
-{:paths ["resources" "src"]
+{:paths ["resources" "src" "dev"]
  :deps {org.clojure/clojure {:mvn/version "RELEASE"}
         org.clojure/math.numeric-tower {:mvn/version "0.0.4"}
         buddy/buddy-core {:mvn/version "1.4.0"}
-        gloss {:mvn/version "0.2.6"}}
+        gloss {:mvn/version "0.2.6"}
+        integrant {:mvn/version "0.7.0"}
+        integrant/repl {:mvn/version "0.3.1"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}}}

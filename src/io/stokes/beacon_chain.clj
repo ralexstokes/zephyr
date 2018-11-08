@@ -1,10 +1,18 @@
 (ns io.stokes.beacon-chain
   (:gen-class)
   (:require
-   [clojure.pprint :as pp]
+   [integrant.core :as ig]
+   [clojure.java.io :as io]
    [io.stokes.validator :as validator]
    [io.stokes.shuffling :as shuffling]
    [io.stokes.math :as math]))
+
+(def default-config-filename (io/resource "config.edn"))
+
+(defn build-config [filename]
+  (-> filename
+      slurp
+      ig/read-string))
 
 (def base-constants
   {:shard-count (math/exp 2 10)
@@ -42,23 +50,39 @@
   (for [id (range count)]
     (validator/create id {})))
 
-(def some-seed (byte-array (map byte (range 1 33))))
+(defn- wait-for-shutdown-signal []
+  ;; TODO sort out control flow
+  )
+
+(defn- launch [config]
+  (let [system (ig/init config)]
+    (wait-for-shutdown-signal)
+    (ig/halt! system)))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Launches an instance of the beacon node"
   [& args]
-  (let [constants (apply constants base-constants args)
-        validators (initialize-validators (:validator-count constants))]
-    (pp/pprint (validator/new-shuffling-to-slots-and-committees validators some-seed 0 constants))))
+  (let [filename (get args 0 default-config-filename)
+        ;; TODO merge config w/ constants
+        config (build-config filename)]
+    (ig/load-namespaces config)
+    (launch config)))
 
 (comment
   (def constants (constants small-constants))
   constants
   (:min-committee-size constants)
 
+  (def some-seed (byte-array (map byte (range 1 33))))
+
   (def validators (initialize-validators (:validator-count constants)))
   validators
 
+
   (def shuffling (validator/new-shuffling-to-slots-and-committees validators some-seed 0 constants))
   shuffling
+
+  (let [constants (apply constants base-constants args)
+        validators (initialize-validators (:validator-count constants))]
+    (pp/pprint (validator/new-shuffling-to-slots-and-committees validators some-seed 0 constants)))
   )

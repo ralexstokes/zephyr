@@ -1,12 +1,8 @@
 (ns io.stokes.hash
   (:require
    [buddy.core.hash :as hash]
-   [buddy.core.codecs :as convert]
    [io.stokes.bytes :as bytes]
    [io.stokes.simple-serialize :as ssz]))
-
-(defn ->hex [bytes]
-  (convert/bytes->hex bytes))
 
 (defn value
   "input is an array of bytes; returns the canonical hash"

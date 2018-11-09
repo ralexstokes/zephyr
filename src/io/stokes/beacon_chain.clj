@@ -4,8 +4,6 @@
    [integrant.core :as ig]
    [clojure.tools.cli :as cli]
    [clojure.java.io :as io]
-   [io.stokes.validator :as validator]
-   [io.stokes.shuffling :as shuffling]
    [io.stokes.math :as math]))
 
 (def default-config-filename (io/resource "config.edn"))

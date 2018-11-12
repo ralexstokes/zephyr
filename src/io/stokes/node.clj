@@ -1,4 +1,4 @@
-(ns io.stokes.beacon-chain
+(ns io.stokes.node
   (:gen-class)
   (:require
    [integrant.core :as ig]

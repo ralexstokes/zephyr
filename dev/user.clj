@@ -2,7 +2,7 @@
   (:require
    [integrant.repl :refer [clear go halt prep init reset reset-all]]
    [integrant.core :as ig]
-   [io.stokes.beacon-chain :as beacon-chain]))
+   [io.stokes.node :as node]))
 
 (def small-constants? true)
 
@@ -13,8 +13,8 @@
       (assoc :validator-count 16)))
 
 (defn select-config []
-  (let [config (-> (beacon-chain/default-config)
-                   (update-in [:io.stokes.node/config :constants] beacon-chain/constants))]
+  (let [config (-> (node/default-config)
+                   (update-in [:io.stokes.node/config :constants] node/constants))]
     (if small-constants?
       (update-in config [:io.stokes.node/config :constants] small-constants)
       config)))

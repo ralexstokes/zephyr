@@ -1,6 +1,11 @@
 (ns io.stokes.bytes
   "Utilities for dealing with bytes and data that can be converted into bytes.")
 
+(defn join
+  "Joins a seq of byte arrays into one byte array."
+  [& arrays]
+  (byte-array (apply concat arrays)))
+
 (defn ->array [input]
   (cond
     (string? input) (.getBytes input "UTF-8")
@@ -17,6 +22,10 @@
             (let [v (bit-and b 0xFF)]
               [(hex (bit-shift-right v 4)) (hex (bit-and v 0x0F))]))]
     (apply str (mapcat hexify-byte bytes))))
+
+(defn ->int
+  [data]
+  (reduce bit-or (map-indexed (fn [i x] (bit-shift-left (bit-and x 0x0FF) (* 8 (- (count data) i 1)))) data)))
 
 (comment
   (let [input "hi"

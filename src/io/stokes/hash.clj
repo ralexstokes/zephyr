@@ -44,6 +44,11 @@
   (-> (apply of args)
       bytes/->hex))
 
+(defn slice
+  "Returns a contiguous subset of the `hash` from the `start` byte to the `end` byte (inclusive)."
+  [^bytes hash start end]
+  (java.util.Arrays/copyOfRange hash start end))
+
 (comment
   (-> "hi"
       as-hex)

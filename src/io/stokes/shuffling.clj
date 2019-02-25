@@ -1,11 +1,9 @@
 (ns io.stokes.shuffling
-  "NOTE: deprecated against latest spec"
-  (:require
-   [io.stokes.math :as math]
-   [io.stokes.hash :as hash]
-   [io.stokes.bytes :as bytes]))
+  (:require [io.stokes.validator :as validator]
+            [io.stokes.bytes :as bytes]
+            [io.stokes.hash :as hash]))
 
-(defn split-into-pieces
+(defn- split-into-pieces
   "splits up the `seq` into `split-count` pieces"
   [seq split-count]
   (let [len (count seq)]
@@ -16,52 +14,57 @@
              (drop lower)
              (take (- upper lower)))))))
 
-(defn- swap
-  "replaces the element in `seq` at index `a` with the element in `seq` at index `b`and vice-versa"
-  [seq a b]
-  (assoc seq b (seq a) a (seq b)))
+(defn- -permuted-index
+  "The inner loop of `permuted-index`"
+  ([index list-size seed shuffle-round-count]
+   (-permuted-index 0 index list-size seed shuffle-round-count))
+  ([round index list-size seed shuffle-round-count]
+   (if (= round shuffle-round-count)
+     index
+     (let [pivot (mod (bytes/->int
+                       (hash/slice
+                        (hash/value
+                         (bytes/join seed (byte round)))
+                        0 8))
+                      list-size)
+           flip (mod (- pivot index)
+                     list-size)
+           position (max index flip)
+           source (hash/value
+                   (bytes/join seed (byte round)
+                               (bytes/int->bytes4
+                                (quot position 256))))
+           byte (aget source (quot (mod position 256) 8))
+           bit (not (zero? (mod (bit-shift-right (mod position 8)) 2)))
+           index (if bit
+                   flip
+                   index)]
+       (recur (inc round) index list-size seed shuffle-round-count)))))
 
-(defn- -shuffle
-  "Inner loop to match the `shuffle` function from the spec"
-  [rand-max values-count range-upper-bound rand-bytes output source index]
-  (let [new-source (hash/value source)]
-    (loop [position 0
-           output output
-           index index]
-      (if (>= position range-upper-bound)
-        [output new-source index]
-        (let [remaining (- values-count index)]
-          (if (= remaining 1)
-            [output new-source index]
-            (let [next-chunk (bytes/slice new-source position (+ position rand-bytes))
-                  sample-from-source (bytes/->int next-chunk)
-                  sample-max (- rand-max (mod rand-max remaining))]
-              (if (< sample-from-source sample-max)
-                (let [replacement-position (+ (mod sample-from-source remaining) index)]
-                  ;; TODO hoist this recur
-                  (recur (+ position rand-bytes)
-                         (swap output index replacement-position)
-                         (inc index)))
-                (recur (+ position rand-bytes)
-                       output
-                       index)))))))))
+(defn- permuted-index [index list-size seed shuffle-round-count]
+  (if (>= index list-size)
+    (throw (ex-info "`index` argument to `permuted-index` must be less than the `list-size` argument."
+                    {:index index
+                     :list-size list-size
+                     :seed seed})))
+  (if (> list-size (Math/pow 2 40))
+    (throw (ex-info "`list-size` must be less than 2**40"
+                    {:index index
+                     :list-size list-size
+                     :seed seed})))
+  (-permuted-index index list-size seed shuffle-round-count))
 
-(defn with-seed
-  "Returns the shuffled `seq` with seed as entropy. `seed` is an array of bytes of length 32."
-  [seq ^bytes seed]
-  (let [values-count (count seq)
-        rand-bytes 3
-        rand-max (- (math/exp 2 (* rand-bytes 8)) 1)
-        range-upper-bound (- 32 (mod 32 rand-bytes))]
-    (assert (< values-count rand-max))
-    (loop [output (into [] seq)
-           source seed
-           index 0]
-      (if (>= index (- values-count 1))
-        output
-        (let [[new-output new-source new-index]
-              (-shuffle rand-max values-count range-upper-bound rand-bytes output source index)]
-          (recur new-output new-source new-index))))))
+(defn from-seed
+  "Shuffle the active `validators` and split into crosslink committees.
+   `seed` is a 32 byte value.
+   Returns a seq of committees (each a seq of validator indices in that committee)."
+  [^bytes seed validators epoch {:keys [shuffle-round-count] :as system-parameters}]
+  (let [active-indices (validator/set->active-indices validators epoch)
+        count (count active-indices)
+        shuffled-keys (set (map #(permuted-index %1 count seed shuffle-rount-count) (range count)))
+        shuffled-indices (keep-indexed #(if (shuffled-keys %1) %2) active-indices)
+        count-pieces (state/epoch-committee-count count system-parameters)]
+    (split-into-pieces shuffled-indices count-pieces)))
 
 (comment
   (split-into-pieces (range 15) 3)
@@ -69,6 +72,6 @@
 
   seed
 
-  (with-seed (range 10) seed)
+  (from-seed seed (range 10) 3 {})
 
   )

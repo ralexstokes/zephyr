@@ -1,4 +1,5 @@
 (ns io.stokes.shuffling
+  "NOTE: deprecated against latest spec"
   (:require
    [io.stokes.math :as math]
    [io.stokes.hash :as hash]

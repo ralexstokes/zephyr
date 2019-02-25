@@ -1,8 +1,7 @@
 {:paths ["resources" "src" "dev"]
  :deps {org.clojure/clojure {:mvn/version "RELEASE"}
         org.clojure/tools.cli {:mvn/version "0.4.1"}
-        org.clojure/math.numeric-tower {:mvn/version "0.0.4"}
-        buddy/buddy-core {:mvn/version "1.4.0"}
+        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.61"}
         gloss {:mvn/version "0.2.6"}
         integrant {:mvn/version "0.7.0"}
         integrant/repl {:mvn/version "0.3.1"}}

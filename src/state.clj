@@ -1,4 +1,4 @@
-(ns io.stokes.state
+(ns state
   "Contains facilities for dealing with the Eth2.0 state. Note that each forks respective state transition may contain additional semantics around handling the state.")
 
 (defn new []

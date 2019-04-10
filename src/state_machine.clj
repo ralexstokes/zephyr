@@ -1,8 +1,8 @@
-(ns io.stokes.state-machine
-  "A `state-machine` manages the state represented by the underlying blockchain data. In particular, it manages 'forks' in the chain, allowing for a variety of state transition functions to be applied."
-  (:require [io.stokes.state :as state]
-            [io.stokes.fork-schedule :as fork-schedule]
-            [io.stokes.genesis :as genesis]))
+(ns state-machine
+  "A `state-machine` manages the state summarizing the underlying blockchain data. In particular, it manages 'forks' in the chain, allowing for a variety of state transition functions to be applied."
+  (:require [state :as state]
+            [fork-schedule :as fork-schedule]
+            [genesis :as genesis]))
 
 (defn new
   "Returns a new state machine starting from the specified `genesis-block` and implementing state transitions according to the `fork-schedule`."
@@ -37,6 +37,6 @@
 (comment
   (let [genesis-block {}
         fs (fork-schedule/new {})
-        sm (io.stokes.state-machine/new (fork-schedule/new {}) genesis-block)]
+        sm (state-machine/new (fork-schedule/new {}) genesis-block)]
     sm)
   )

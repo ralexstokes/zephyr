@@ -1,10 +1,10 @@
-(ns io.stokes.node
+(ns node
   (:gen-class)
   (:require
    [integrant.core :as ig]
    [clojure.tools.cli :as cli]
    [clojure.java.io :as io]
-   [io.stokes.math :as math]))
+   [math :as math]))
 
 (def default-config-filename (io/resource "config.edn"))
 

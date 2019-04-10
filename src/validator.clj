@@ -1,4 +1,4 @@
-(ns io.stokes.validator
+(ns validator
   "Contains logic for managing validators.")
 
 (defn new [far-future-slot]
@@ -26,7 +26,7 @@
   (let [some-epoch 20
         some-activation (- some-epoch 3)
         far-future-epoch 200000
-        validators (repeat 3 (io.stokes.validator/new far-future-epoch))
+        validators (repeat 3 (validator/new far-future-epoch))
         active-validators (map-indexed (fn [index validator]
                                          (if (even? index)
                                            (assoc validator ::activation-epoch some-activation)

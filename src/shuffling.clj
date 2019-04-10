@@ -1,7 +1,7 @@
-(ns io.stokes.shuffling
-  (:require [io.stokes.validator :as validator]
-            [io.stokes.bytes :as bytes]
-            [io.stokes.hash :as hash]))
+(ns shuffling
+  (:require [validator :as validator]
+            [bytes :as bytes]
+            [hash :as hash]))
 
 (defn- split-into-pieces
   "splits up the `seq` into `split-count` pieces"

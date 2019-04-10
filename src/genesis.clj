@@ -1,6 +1,6 @@
-(ns io.stokes.genesis
+(ns .genesis
   "Contains functionality pertaining to the genesis event of Eth2.0."
-  (:require [io.stokes.state :as state]))
+  (:require [.state :as state]))
 
 (defn state-from-block
   "Returns the genesis state, given the `genesis-block`."

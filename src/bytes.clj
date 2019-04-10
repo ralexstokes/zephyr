@@ -1,4 +1,4 @@
-(ns io.stokes.bytes
+(ns .bytes
   "Utilities for dealing with bytes and data that can be converted into bytes.")
 
 (defn join
@@ -10,7 +10,7 @@
   (cond
     (string? input) (.getBytes input "UTF-8")
     :else (throw
-           (ex-info "cannot convert input to byte array; please extend io.stokes.bytes/to-array for your type"
+           (ex-info "cannot convert input to byte array; please extend .bytes/to-array for your type"
                     {:input input
                      :type (type input)}))))
 

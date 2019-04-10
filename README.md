@@ -10,6 +10,6 @@ Best to launch a REPL and just poke around at this point.
 
 Eventually
 
-    $ clj -m io.stokes.beacon-chain
+    $ clj -m beacon-chain
     
 will launch the client.

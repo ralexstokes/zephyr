@@ -2,7 +2,7 @@
   (:require
    [integrant.repl :refer [clear go halt prep init reset reset-all]]
    [integrant.core :as ig]
-   [io.stokes.node :as node]))
+   [node :as node]))
 
 (def small-constants? true)
 
@@ -14,9 +14,9 @@
 
 (defn select-config []
   (let [config (-> (node/default-config)
-                   (update-in [:io.stokes.node/config :constants] node/constants))]
+                   (update-in [:node/config :constants] node/constants))]
     (if small-constants?
-      (update-in config [:io.stokes.node/config :constants] small-constants)
+      (update-in config [:node/config :constants] small-constants)
       config)))
 
 (integrant.repl/set-prep! select-config)

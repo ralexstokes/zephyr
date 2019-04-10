@@ -1,4 +1,4 @@
-{:io.stokes.node/config
+{:node/config
  {:genesis {:initial-validator-entries []}
   :constants {:shard-count #math/exp[2 10]
               :deposit-size #math/exp[2 5]
@@ -17,5 +17,5 @@
               :logout-message "LOGOUT"
               :initial-fork-version 0
               :validator-count 312500}}
- :io.stokes.state/config
+ :state/config
  {:example? true}}

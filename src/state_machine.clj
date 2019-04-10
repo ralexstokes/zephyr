@@ -1,8 +1,8 @@
 (ns state-machine
   "A `state-machine` manages the state summarizing the underlying blockchain data. In particular, it manages 'forks' in the chain, allowing for a variety of state transition functions to be applied."
-  (:require [state :as state]
-            [fork-schedule :as fork-schedule]
-            [genesis :as genesis]))
+  (:require [state]
+            [fork-schedule]
+            [genesis]))
 
 (defn new
   "Returns a new state machine starting from the specified `genesis-block` and implementing state transitions according to the `fork-schedule`."

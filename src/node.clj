@@ -4,7 +4,7 @@
    [integrant.core :as ig]
    [clojure.tools.cli :as cli]
    [clojure.java.io :as io]
-   [math :as math]))
+   [math]))
 
 (def default-config-filename (io/resource "config.edn"))
 

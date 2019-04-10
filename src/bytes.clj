@@ -1,4 +1,4 @@
-(ns .bytes
+(ns bytes
   "Utilities for dealing with bytes and data that can be converted into bytes.")
 
 (defn join

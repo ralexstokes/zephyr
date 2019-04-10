@@ -1,6 +1,6 @@
-(ns .genesis
+(ns genesis
   "Contains functionality pertaining to the genesis event of Eth2.0."
-  (:require [.state :as state]))
+  (:require [state]))
 
 (defn state-from-block
   "Returns the genesis state, given the `genesis-block`."

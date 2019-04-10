@@ -1,7 +1,7 @@
 (ns shuffling
-  (:require [validator :as validator]
-            [bytes :as bytes]
-            [hash :as hash]))
+  (:require [validator]
+            [bytes]
+            [hash]))
 
 (defn- split-into-pieces
   "splits up the `seq` into `split-count` pieces"

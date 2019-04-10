@@ -1,7 +1,6 @@
-(ns .hash
+(ns hash
   "Contains functionality for producing (canonical) hashes of both byte strings and generic data"
-  (:require
-   [.bytes :as bytes])
+  (:require [bytes])
   (:import
    org.bouncycastle.crypto.digests.KeccakDigest))
 

@@ -1,6 +1,6 @@
-(ns beacon-chain-test
+(ns validator-test
   (:require [clojure.test :refer :all]
-            [beacon-chain :refer :all]))
+            [validator :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

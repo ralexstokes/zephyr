@@ -1,5 +1,8 @@
 (ns bitfield)
 
+(defn new []
+  (byte-array [(byte 0x0)]))
+
 (defn- get-bitfield-bit [bitfield index]
   (-> (aget bitfield (quot index 8))
       (unsigned-bit-shift-right (mod index 8))

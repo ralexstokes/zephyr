@@ -3,10 +3,12 @@
   (:require [clojure.set :as set]
             [validator]
             [attestation]
+            [crosslink]
             [slot]
             [hash]
             [bitfield]
             [epoch]
+            [block]
             [bls]
             [ssz]
             [committee]))
@@ -40,8 +42,37 @@
      eth1-data-votes
      deposit-index])
 
-(defn new []
-  (map->BeaconState {}))
+(defn new [genesis-time genesis-eth1-data {:keys [genesis-slot genesis-fork-version genesis-epoch latest-randao-mixes-length genesis-start-shard shard-count slots-per-historical-root latest-active-index-roots-length latest-slashed-exit-length]}]
+  (map->BeaconState
+   {:slot genesis-slot
+    :genesis-time genesis-time
+    :fork (fork/new genesis-epoch
+                    genesis-fork-version
+                    genesis-fork-version)
+    :validator-registry []
+    :balances []
+    :validator-registry-update-epoch genesis-epoch
+    :latest-randao-mixes (into [] (repeat latest-randao-mixes-length hash/zero))
+    :latest-start-shard genesis-start-shard
+    :previous-epoch-attestations []
+    :current-epoch-attestations []
+    :previous-justified-epoch (- genesis-epoch 1)
+    :current-justified-epoch genesis-epoch
+    :previous-justified-root hash/zero
+    :current-justified-root hash/zero
+    :justification-bitfield (bitfield/new)
+    :finalized-epoch genesis-epoch
+    :finalized-root hash/zero
+    :latest-crosslinks (into [] (repeat shard-count (crosslink/new genesis-epoch hash/zero)))
+    :latest-block-roots (into [] (repeat slots-per-historical-root hash/zero))
+    :latest-state-roots (into [] (repeat slots-per-historical-root hash/zero))
+    :latest-active-index-roots (into [] (repeat latest-active-index-roots-length hash/zero))
+    :latest-slashed-balances (into [] (repeat latest-slashed-exit-length 0))
+    :latest-block-header (block/->temporary-block-header (block/empty genesis-slot))
+    :historical-roots []
+    :latest-eth1-data genesis-eth1-data
+    :eth1-data-votes []
+    :deposit-index 0}))
 
 (defn ->current-epoch [state {:keys [slots-per-epoch]}]
   (-> state

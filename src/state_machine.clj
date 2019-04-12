@@ -5,10 +5,8 @@
             [genesis]))
 
 (defn new
-  "Returns a new state machine starting from the specified `genesis-block` and implementing state transitions according to the `fork-schedule`."
-  [fork-schedule genesis-block]
-  {::fork-schedule fork-schedule
-   ::state (genesis/state-from-block genesis-block)})
+  [fork-schedule]
+  {::fork-schedule fork-schedule})
 
 (defn- ->state [state-machine]
   (::state state-machine))

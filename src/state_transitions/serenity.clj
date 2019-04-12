@@ -3,3 +3,6 @@
 
 (defn apply-block [state block]
   state)
+
+(defn process-deposit [state deposit system-parameters]
+  state)

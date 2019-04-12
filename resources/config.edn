@@ -1,21 +1,19 @@
-{:node/config
- {:genesis {:initial-validator-entries []}
-  :constants {:shard-count #math/exp[2 10]
-              :deposit-size #math/exp[2 5]
-              :min-online-deposit-size #math/exp[2 4]
-              :gwei-per-eth #math/exp[10 9]
-              :min-committee-size #math/exp[2 7]
-              :genesis-time (java.util.Date.)
-              :slot-duration #math/exp[2 4]
-              :cycle-length #math/exp[2 6]
-              :min-validator-set-change-interval #math/exp[2 8]
-              :randao-slots-per-layer #math/exp[2 12]
-              :sqrt-e-drop-time #math/exp[2 16]
-              :withdrawal-period #math/exp[2 19]
-              :base-reward-quotient #math/exp[2 15]
-              :max-validator-churn-quotient #math/exp[2 5]
-              :logout-message "LOGOUT"
-              :initial-fork-version 0
-              :validator-count 312500}}
- :state/config
- {:example? true}}
+{:node/config {:genesis {:initial-validator-entries []}
+               :constants {:shard-count #math/exp[2 10]
+                           :deposit-size #math/exp[2 5]
+                           :min-online-deposit-size #math/exp[2 4]
+                           :gwei-per-eth #math/exp[10 9]
+                           :min-committee-size #math/exp[2 7]
+                           :genesis-time (java.util.Date.)
+                           :slot-duration #math/exp[2 4]
+                           :cycle-length #math/exp[2 6]
+                           :min-validator-set-change-interval #math/exp[2 8]
+                           :randao-slots-per-layer #math/exp[2 12]
+                           :sqrt-e-drop-time #math/exp[2 16]
+                           :withdrawal-period #math/exp[2 19]
+                           :base-reward-quotient #math/exp[2 15]
+                           :max-validator-churn-quotient #math/exp[2 5]
+                           :logout-message "LOGOUT"
+                           :initial-fork-version 0
+                           :validator-count 312500}}}
+

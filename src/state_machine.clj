@@ -15,7 +15,7 @@
 
 (defn- ->slot [state-machine]
   (let [state (->state state-machine)]
-    (state/->slot state)))
+    (.slot state)))
 
 (defn- ->fork-schedule [state-machine]
   (::fork-schedule state-machine))

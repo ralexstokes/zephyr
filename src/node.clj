@@ -26,6 +26,9 @@
     (-> base-constants
         (assoc :max-committees-per-slot max-committees-per-slot))))
 
+(defmethod ig/init-key :node/config [_ config]
+  config)
+
 (defn- wait-for-shutdown-signal []
   ;; TODO sort out control flow
   )

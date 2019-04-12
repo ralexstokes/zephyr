@@ -1,35 +1,38 @@
 (ns validator
   "Contains logic for managing validators.")
 
-(defn new [far-future-slot]
-  {::activation-epoch far-future-slot
-   ::exit-epoch far-future-slot})
+(defrecord Validator
+    [pubkey
+     withdrawal-credentials
+     activation-epoch
+     exit-epoch
+     withdrawable-epoch
+     initiated-exit?
+     slashed?
+     high-balance])
 
-(defn ->activation-epoch [validator]
-  (::activation-epoch validator))
+(defn new [pubkey withdrawal-credentials far-future-epoch]
+  (map->Validator
+   {:pubkey pubkey
+    :withdrawal-credentials withdrawal-credentials
+    :activation-epoch far-future-epoch
+    :exit-epoch far-future-epoch
+    :withdrawable-epoch far-future-epoch
+    :initiated-exit? false
+    :slashed? false
+    :high-balance 0}))
 
-(defn ->exit-epoch [validator]
-  (::exit-epoch validator))
-
-(defn is-active?
-  "Is the `validator` active at the given `epoch`?"
-  [validator epoch]
-  (and (<= (->activation-epoch validator)
+(defn is-active? [validator epoch]
+  (and (<= (.activation-epoch validator)
            epoch)
        (< epoch
-          (->exit-epoch validator))))
+          (.exit-epoch validator))))
 
-(defn set->active-indices [validators epoch]
-  (keep-indexed #(if (is-active? %2 epoch) %1) validators))
+(defn is-slashable? [validator epoch]
+  (and
+   (and (<= (.activation-epoch validator) epoch)
+        (< epoch (.withdrawable-epoch validator)))
+   (not (.slashed? validator))))
 
-(comment
-  (let [some-epoch 20
-        some-activation (- some-epoch 3)
-        far-future-epoch 200000
-        validators (repeat 3 (validator/new far-future-epoch))
-        active-validators (map-indexed (fn [index validator]
-                                         (if (even? index)
-                                           (assoc validator ::activation-epoch some-activation)
-                                           validator)) validators)]
-    (set->active-indices active-validators some-epoch))
-  )
+(defn registry->active-indices [validator-registry epoch]
+  (keep-indexed #(if (is-active? %2 epoch) %1) validator-registry))

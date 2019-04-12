@@ -1,5 +1,6 @@
 (ns bytes
-  "Utilities for dealing with bytes and data that can be converted into bytes.")
+  "Utilities for dealing with bytes and data that can be converted into bytes."
+  (:import (java.nio ByteBuffer ByteOrder)))
 
 (defn join
   "Joins a seq of byte arrays into one byte array."
@@ -25,11 +26,76 @@
 
 (defn ->int
   [data]
+  ;; TODO convert from little endian
   (reduce bit-or (map-indexed (fn [i x] (bit-shift-left (bit-and x 0x0FF) (* 8 (- (count data) i 1)))) data)))
+
+;; TODO generate these via macro
+
+(defn from-int1 [value]
+  (let [result (byte-array 1)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int2 [value]
+  (let [result (byte-array 2)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int3 [value]
+  (let [result (byte-array 3)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int4 [value]
+  (let [result (byte-array 4)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int8 [value]
+  (let [result (byte-array 8)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int32 [value]
+  (let [result (byte-array 32)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int48 [value]
+  (let [result (byte-array 48)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn from-int96 [value]
+  (let [result (byte-array 96)]
+    (doto (ByteBuffer/wrap result)
+      (.order ByteOrder/LITTLE_ENDIAN)
+      (.putInt value))
+    result))
+
+(defn zeros [size]
+  (byte-array size))
 
 (comment
   (let [input "hi"
         bytes (->array input)
         output (->hex bytes)]
     [bytes (str "0x" output) (String. bytes "UTF-8")])
+  (let [result (from-int4 33)
+        bs (->hex result)]
+    bs)
   )

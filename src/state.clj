@@ -76,7 +76,7 @@
 
 (defn ->current-epoch [state {:keys [slots-per-epoch]}]
   (-> state
-      .slot
+      :slot
       (slot/->epoch slots-per-epoch)))
 
 (defn ->previous-epoch [state system-parameters]
@@ -93,12 +93,12 @@
   "from spec: get_balance"
   [state index]
   (-> state
-      .balances
+      :balances
       (nth index)))
 
 (defn validator-at-index [state index]
   (-> state
-      .validator-registry
+      :validator-registry
       (nth index)))
 
 (defn- increment-validator-high-balance [validator balance high-balance-increment]
@@ -116,7 +116,7 @@
                                         (< (+ validator-high-balance
                                               (* 3 half-increment))
                                            balance))
-        validator-registry (.validator-registry state)
+        validator-registry (:validator-registry state)
         new-validator-registry (if should-adjust-high-balance?
                                  (assoc validator-registry index
                                         (increment-validator-high-balance validator balance high-balance-increment))
@@ -285,8 +285,8 @@
       (-find-beacon-proposer-index state current-epoch first-committee system-parameters))))
 
 (defn ->crosslink-committee-for-attestation [state attestation-data system-parameters]
-  (let [committee (->> (->crosslink-committees-at-slot state (.slot attestation-data) system-parameters)
-                       (filter (fn [committee shard] (= shard (.shard attestation-data))))
+  (let [committee (->> (->crosslink-committees-at-slot state (:slot attestation-data) system-parameters)
+                       (filter (fn [committee shard] (= shard (:shard attestation-data))))
                        first
                        first)]
     (if committee
@@ -361,10 +361,10 @@
       domain-attestation))))
 
 (defn activate-validator [state index is-genesis {:keys [genesis-epoch activation-exit-delay] :as system-parameters}]
-  (update-in state [:validator-registry index :activation-epoch]
-             (fn [_] (if is-genesis
-                       genesis-epoch
-                       (epoch/->delayed-activation-exit-epoch (->current-epoch state system-parameters) activation-exit-delay)))))
+  (assoc-in state [:validator-registry index :activation-epoch]
+            (if is-genesis
+              genesis-epoch
+              (epoch/->delayed-activation-exit-epoch (->current-epoch state system-parameters) activation-exit-delay))))
 
 (defn initiate-validator-exit [state index]
   (update-in state [:validator-registry index :initiated-exit?] not))
@@ -388,12 +388,82 @@
      (-> state
          (exit-validator slashed-index system-parameters)
          (update-in [:validator-registry slashed-index :slashed?] not)
-         (update-in [:validator-registry slashed-index :withdrawable-epoch] (fn [_] (+ current-epoch latest-slashed-exit-length)))
+         (assoc-in [:validator-registry slashed-index :withdrawable-epoch] (+ current-epoch latest-slashed-exit-length))
          (update-in [:latest-slashed-balances (mod current-epoch latest-slashed-exit-length)] #(+ % slashed-balance))
          (increase-balance state proposer-index proposer-reward)
          (increase-balance state whistleblower-index (- whistleblowing-reward proposer-reward))
          (decrease-balance state slashed-index whistleblowing-reward system-parameters)))))
 
 (defn prepare-validator-for-withdrawal [state index {:keys [min-validator-withdrawability-delay] :as system-parameters}]
-  (update-in [:validator-registry index :withdrawable-epoch] (fn [_] (+ (->current-epoch state system-parameters)
-                                                                        min-validator-withdrawability-delay))))
+  (assoc-in [:validator-registry index :withdrawable-epoch] (+ (->current-epoch state system-parameters)
+                                                               min-validator-withdrawability-delay)))
+
+(defn- ->total-balance-for-epoch [state epoch system-parameters]
+  (-> state
+      :validator-registry
+      (#(validator/registry->active-indices epoch))
+      ((fn [validator-indices] (->total-balance state validator-indices system-parameters)))))
+
+(defn ->current-total-balance [state system-parameters]
+  (->total-balance-for-epoch state (->current-epoch state system-parameters) system-parameters))
+
+(defn ->previous-total-balance [state system-parameters]
+  (->total-balance-for-epoch state (->previous-epoch state system-parameters) system-parameters))
+
+(defn- union-attestation-participants [state output attestation system-parameters]
+  (set/union output (into #{} (->attestation-participants state (:data attestation) (:aggregation-bitfield attestation) system-parameters))))
+
+(defn ->unslashed-attesting-indices [state attestations system-parameters]
+  (->> (reduce #(union-attestation-participants state %1 %2 system-parameters) #{} attestations)
+       (filter #(not (get-in state [:validator-registry % :slashed?])))
+       sort))
+
+(defn ->attesting-balance [state attestations system-parameters]
+  (->total-balance state (->unslashed-attesting-indices state attestations system-parameters) system-parameters))
+
+(defn ->boundary-attestations-for-epoch [state epoch attestations {:keys [slots-per-epoch] :as system-parameters}]
+  (let [boundary-slot (epoch/->start-slot epoch slots-per-epoch)]
+    (filter #(= (get-in % [:data :target-root])
+                (->block-root state boundary-slot system-parameters)) attestations)))
+
+(defn ->current-epoch-boundary-attestations [state system-parameters]
+  (->boundary-attestations-for-epoch state (->current-epoch state system-parameters) (:current-epoch-attestations state) system-parameters))
+
+(defn ->previous-epoch-boundary-attestations [state system-parameters]
+  (->boundary-attestations-for-epoch state (->previous-epoch state system-parameters) (:previous-epoch-attestations state) system-parameters))
+
+(defn ->previous-epoch-matching-head-attestations [state system-parameters]
+  (filter #(= (get-in % [:data :beacon-block-root])
+              (->block-root state (get-in % [:data :slot]) system-parameters)) (:previous-epoch-attestations state)))
+
+(defn- root->attestations [attestations root]
+  (filter #(= (get-in % [:data :crosslink-data-root]) root) attestations))
+
+(defn- compute-winning-root-and-participants [state all-roots valid-attestations system-parameters]
+  (let [root->attestations (partial root->attestations valid-attestations)
+        winning-root (second (last (sort (map #(vector (->attesting-balance state (root->attestations %) system-parameters) %) all-roots))))]
+    [winning-root (->unslashed-attesting-indices state (root->attestations winning-root) system-parameters)]))
+
+(defn ->winning-root-and-participants [state shard system-parameters]
+  (let [all-attestations (concat (:current-epoch-attestations state) (:previous-epoch-attestations state))
+        latest-crosslink (get-in state [:latest-crosslinks shard])
+        valid-attestations (filter #(= (get-in % [:data :previous-crosslink]) latest-crosslink) all-attestations)
+        all-roots (map #(get-in % [:data :crosslink-data-root]) valid-attestations)]
+    (if all-roots
+      (compute-winning-root-and-participants state all-roots valid-attestations system-parameters)
+      [hash/zero []])))
+
+(defn ->earliest-attestation [state validator-index system-parameters]
+  (apply min-key :inclusion-slot
+         (filter #((into #{}
+                         (->attestation-participants state (:data %) (:aggregation-bitfield %) system-parameters))
+                   validator-index)
+                 (:previous-epoch-attestations state))))
+
+(defn ->inclusion-slot [state validator-index system-parameters]
+  (:inclusion-slot (->earliest-attestation state validator-index system-parameters)))
+
+(defn ->inclusion-distance [state validator-index system-parameters]
+  (let [attestation (->earliest-attestation state validator-index system-parameters)]
+    (- (:inclusion-slot attestation)
+       (get-in attestation [:data :slot]))))

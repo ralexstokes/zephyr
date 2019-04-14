@@ -2,7 +2,7 @@
   "Contains functionality pertaining to the genesis event of Eth2.0."
   (:require [state]
             [ssz]
-            [state-transitions.serenity :as serenity]
+            [state-transitions.per-block :as transitions]
             [block]))
 
 (defn- activate-if-max-deposit [state validator-index {:keys [max-deposit-amount] :as  system-parameters}]
@@ -15,7 +15,7 @@
   "from spec: get_genesis_beacon_state"
   [genesis-deposits genesis-time genesis-eth1-data {:keys [genesis-epoch latest-active-index-roots-length] :as system-parameters}]
   (let [state (reduce
-               #(serenity/process-deposit %1 %2 system-parameters)
+               #(transitions/process-deposit %1 %2 system-parameters)
                (state/new genesis-time genesis-eth1-data system-parameters)
                genesis-deposits)
         state-with-activations (reduce

@@ -23,16 +23,16 @@
     :high-balance 0}))
 
 (defn is-active? [validator epoch]
-  (and (<= (.activation-epoch validator)
+  (and (<= (:activation-epoch validator)
            epoch)
        (< epoch
-          (.exit-epoch validator))))
+          (:exit-epoch validator))))
 
 (defn is-slashable? [validator epoch]
   (and
-   (and (<= (.activation-epoch validator) epoch)
-        (< epoch (.withdrawable-epoch validator)))
-   (not (.slashed? validator))))
+   (and (<= (:activation-epoch validator) epoch)
+        (< epoch (:withdrawable-epoch validator)))
+   (not (:slashed? validator))))
 
 (defn registry->active-indices [validator-registry epoch]
   (keep-indexed #(if (is-active? %2 epoch) %1) validator-registry))

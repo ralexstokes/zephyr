@@ -4,10 +4,10 @@
 (defrecord Validator
     [pubkey
      withdrawal-credentials
+     activation-eligibility-epoch
      activation-epoch
      exit-epoch
      withdrawable-epoch
-     initiated-exit?
      slashed?
      high-balance])
 
@@ -15,10 +15,10 @@
   (map->Validator
    {:pubkey pubkey
     :withdrawal-credentials withdrawal-credentials
+    :activation-eligibility-epoch far-future-epoch
     :activation-epoch far-future-epoch
     :exit-epoch far-future-epoch
     :withdrawable-epoch far-future-epoch
-    :initiated-exit? false
     :slashed? false
     :high-balance 0}))
 
@@ -34,5 +34,23 @@
         (< epoch (:withdrawable-epoch validator)))
    (not (:slashed? validator))))
 
-(defn registry->active-indices [validator-registry epoch]
-  (keep-indexed #(if (is-active? %2 epoch) %1) validator-registry))
+(defn initiate-entry [validator epoch]
+  (update validator :activation-eligibility-epoch epoch))
+
+(defn activate
+  "from spec: activate_validator"
+  [validator activation-epoch is-genesis {:keys [genesis-epoch activation-exit-delay] :as system-parameters}]
+  (if is-genesis
+    (-> validator
+        (assoc :activation-eligibility-epoch genesis-epoch)
+        (assoc :activation-epoch genesis-epoch))
+    (assoc validator :activation-epoch
+           (epoch/->delayed-activation-exit-epoch activation-epoch activation-exit-delay))))
+
+(defn initiate-exit [validator exit-queue-epoch {:keys [far-future-epoch min-validator-withdrawability-delay]}]
+  (if (= (:exit-epoch validator)
+         far-future-epoch)
+    validator
+    (-> validator
+        (assoc :exit-epoch exit-queue-epoch)
+        (assoc :withdrawable-epoch (+ exit-queue-epoch min-validator-withdrawability-delay)))))

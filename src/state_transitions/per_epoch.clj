@@ -4,12 +4,11 @@
             [state-transitions.crosslinks :as crosslinks]
             [state-transitions.eth1-data :as eth1-data]
             [state-transitions.rewards :as rewards]
-            [state-transitions.ejections :as ejections]
+            [state-transitions.entries-and-exits :as entries-and-exits]
             [state-transitions.validator-registry :as validator-registry]
-            [state-transitions.slashings :as slashings]
-            [state-transitions.exit-queue :as exit-queue]))
+            [state-transitions.slashings :as slashings]))
 
-(defn- finalize-updates [state system-parameters]
+(defn- finalize-epoch [state system-parameters]
   state)
 
 (defn run-transition [state system-parameters]
@@ -18,11 +17,11 @@
       (#(crosslinks/process % system-parameters))
       (#(eth1-data/process % system-parameters))
       (#(rewards/process % system-parameters))
-      (#(ejections/process % system-parameters))
+      ;; TODO can the next two be merged?
+      (#(entries-and-exits/process % system-parameters))
       (#(validator-registry/process % system-parameters))
       (#(slashings/process % system-parameters))
-      (#(exit-queue/process % system-parameters))
-      (#(finalize-updates % system-parameters))))
+      (#(finalize-epoch % system-parameters))))
 
 (defn transition [state {:keys [genesis-slot slots-per-epoch] :as system-parameters}]
   (if (zero?

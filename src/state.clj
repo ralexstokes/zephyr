@@ -89,6 +89,9 @@
       (->current-epoch system-parameters)
       inc))
 
+(defn ->active-validator-indices [state epoch]
+  (keep-indexed #(if (validator/is-active? %2 epoch) %1) (:validator-registry state)))
+
 (defn balance-for-validator
   "from spec: get_balance"
   [state index]
@@ -159,7 +162,7 @@
                                               previous-epoch
                                               next-epoch
                                               {:keys [shard-count slots-per-epoch] :as system-parameters}]
-  (let [indices (validator/registry->active-indices (.validator-registry state) epoch)
+  (let [indices (->active-validator-indices state epoch)
         committees-per-epoch (committee/count-for-epoch state epoch system-parameters)
         start-shard (compute-start-shard
                      state
@@ -360,15 +363,12 @@
       (-> indexed-attestation .data .slot)
       domain-attestation))))
 
-(defn activate-validator [state index is-genesis {:keys [genesis-epoch activation-exit-delay] :as system-parameters}]
-  (assoc-in state [:validator-registry index :activation-epoch]
-            (if is-genesis
-              genesis-epoch
-              (epoch/->delayed-activation-exit-epoch (->current-epoch state system-parameters) activation-exit-delay))))
+(defn ->churn-limit [state {:keys [min-per-epoch-churn-limit churn-limit-quotient] :as system-parameters}]
+  (max min-per-epoch-churn-limit
+       (quot (count (->active-validator-indices state (->current-epoch state system-parameters)))
+             churn-limit-quotient)))
 
-(defn initiate-validator-exit [state index]
-  (update-in state [:validator-registry index :initiated-exit?] not))
-
+;; TODO move to `validator` ns?
 (defn exit-validator [state index {:keys [far-future-epoch slots-per-epoch activation-exit-delay] :as system-parameters}]
   (update-in state [:validator-registry index :exit-epoch]
              (fn [exit-epoch]
@@ -399,10 +399,7 @@
                                                                min-validator-withdrawability-delay)))
 
 (defn- ->total-balance-for-epoch [state epoch system-parameters]
-  (-> state
-      :validator-registry
-      (#(validator/registry->active-indices epoch))
-      ((fn [validator-indices] (->total-balance state validator-indices system-parameters)))))
+  (->total-balance state (->active-validator-indices state epoch) system-parameters))
 
 (defn ->current-total-balance [state system-parameters]
   (->total-balance-for-epoch state (->current-epoch state system-parameters) system-parameters))
@@ -467,3 +464,14 @@
   (let [attestation (->earliest-attestation state validator-index system-parameters)]
     (- (:inclusion-slot attestation)
        (get-in attestation [:data :slot]))))
+
+(defn ->exit-queue-epoch [state {:keys [far-future-epoch activation-exit-delay] :as system-parameters}]
+  (let [exit-epochs (keep #(if (not= (:exit-epoch %)
+                                     far-future-epoch)
+                             (:exit-epoch %)) (:validator-registry state))
+        exit-queue-epoch (last (sort (conj exit-epochs (epoch/->delayed-activation-exit-epoch (->current-epoch state system-parameters) activation-exit-delay))))
+        exit-queue-churn (count (filter #(= (:exit-epoch %) exit-queue-epoch) (:validator-registry state)))
+        should-increment-exit-queue-epoch (>= exit-queue-churn (->churn-limit state system-parameters))]
+    (if should-increment-exit-queue-epoch
+      (inc exit-queue-epoch)
+      exit-queue-epoch)))

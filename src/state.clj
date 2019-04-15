@@ -113,7 +113,7 @@
   [state index balance {:keys [high-balance-increment]}]
   (let [validator (validator-at-index state index)
         half-increment (quot high-balance-increment 2)
-        validator-high-balance (.high-balance validator)
+        validator-high-balance (:high-balance validator)
         should-adjust-high-balance? (or (> validator-high-balance
                                            balance)
                                         (< (+ validator-high-balance
@@ -124,7 +124,7 @@
                                  (assoc validator-registry index
                                         (increment-validator-high-balance validator balance high-balance-increment))
                                  validator-registry)
-        new-balances (assoc (.balances state) index balance)]
+        new-balances (assoc (:balances state) index balance)]
     (merge state {:validator-registry new-validator-registry
                   :balances new-balances})))
 

@@ -1,5 +1,6 @@
 (ns validator
-  "Contains logic for managing validators.")
+  "Contains logic for managing validators."
+  (:require [epoch]))
 
 (defrecord Validator
     [pubkey

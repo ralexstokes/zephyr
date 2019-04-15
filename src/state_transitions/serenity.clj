@@ -12,4 +12,3 @@
       (#(epoch/transition % system-parameters))
       slot/transition
       (#(block/transition % block system-parameters))))
-
